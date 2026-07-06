@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Create post — InstaCore</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<div class="page" style="max-width: 480px;">
+  <div class="card">
+    <h2 class="form-title">Create a post</h2>
+    <p class="form-subtitle">Paste a link to an image already hosted somewhere (Imgur, your own CDN, etc.) — direct file upload isn't supported yet.</p>
+
+    <div class="error-banner" id="error-banner"></div>
+
+    <form id="post-form">
+      <label for="image_url">Image URL</label>
+      <input type="url" id="image_url" placeholder="https://..." required />
+
+      <img id="preview" style="display:none; width:100%; margin-top:12px; border-radius:8px; max-height:300px; object-fit:cover;" />
+
+      <label for="caption">Caption</label>
+      <textarea id="caption" maxlength="2200" required placeholder="Write a caption…"></textarea>
+
+      <button type="submit" class="primary" id="submit-btn">Share post</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  requireAuth();
+
+  const imageInput = document.getElementById("image_url");
+  const preview = document.getElementById("preview");
+  imageInput.addEventListener("input", () => {
+    if (imageInput.value.trim()) {
+      preview.src = imageInput.value.trim();
+      preview.style.display = "block";
+    } else {
+      preview.style.display = "none";
+    }
+  });
+  preview.addEventListener("error", () => { preview.style.display = "none"; });
+
+  const form = document.getElementById("post-form");
+  const errorBanner = document.getElementById("error-banner");
+  const submitBtn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorBanner.classList.remove("visible");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Posting…";
+
+    try {
+      await apiRequest("/api/v1/posts/", {
+        method: "POST",
+        json: {
+          image_url: imageInput.value.trim(),
+          caption: document.getElementById("caption").value.trim(),
+        },
+      });
+      window.location.href = "feed.html";
+    } catch (err) {
+      errorBanner.textContent = err.message;
+      errorBanner.classList.add("visible");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Share post";
+    }
+  });
+</script>
+</body>
+</html>
